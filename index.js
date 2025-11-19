@@ -6,45 +6,59 @@ import db from "./Kambaz/Database/index.js";
 import UserRoutes from "./Kambaz/Users/routes.js";
 import CourseRoutes from "./Kambaz/Courses/routes.js";
 import AssignmentsDao from "./Kambaz/Assignments/dao.js";
-import AssignmentRoutes from "./Kambaz/Assignments/routes.js"; 
+import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentsDao from "./Kambaz/Enrollments/dao.js";
-import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";  
-import ModulesRoutes from "./Kambaz/Modules/routes.js";  
+import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
+import ModulesRoutes from "./Kambaz/Modules/routes.js";
 
 import "dotenv/config";
 import session from "express-session";
 
 const app = express();
+
+// -----------------------------------------------------
+// ✅ FIXED CORS — REQUIRED FOR VERCEL + RENDER
+// -----------------------------------------------------
 app.use(
   cors({
     credentials: true,
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "https://kambaz-next-js-mocha.vercel.app"
+    ],
   })
 );
 
-const sessionOptions = {
-  secret: process.env.SESSION_SECRET || "kambaz",
-  resave: false,
-  saveUninitialized: false,
-};
-if (process.env.SERVER_ENV !== "development") {
-  sessionOptions.proxy = true;
-  sessionOptions.cookie = {
-    sameSite: "none",
-    secure: true,
-    domain: process.env.SERVER_URL,
-  };
-}
-app.use(session(sessionOptions));
+// -----------------------------------------------------
+// ✅ FIXED SESSION — THE MOST IMPORTANT PART
+// -----------------------------------------------------
+const isProduction = process.env.NODE_ENV === "production";
 
+app.set("trust proxy", 1); // Required for secure cookies on Render
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "kambaz",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: isProduction,                    // true on Render
+      httpOnly: true,
+      sameSite: isProduction ? "none" : "lax", // "none" for cross-site cookies
+    },
+  })
+);
+
+// -----------------------------------------------------
 app.use(express.json());
 
+// Routes
 UserRoutes(app, db);
 CourseRoutes(app, db);
-ModulesRoutes(app, db);         // ✅ MOUNT MODULE ROUTES HERE
+ModulesRoutes(app, db);
 
-const assignmentsDao = AssignmentsDao(db);     
-AssignmentRoutes(app, assignmentsDao);      
+const assignmentsDao = AssignmentsDao(db);
+AssignmentRoutes(app, assignmentsDao);
 
 const enrollmentsDao = EnrollmentsDao(db);
 EnrollmentRoutes(app, enrollmentsDao);
@@ -52,4 +66,7 @@ EnrollmentRoutes(app, enrollmentsDao);
 Lab5(app);
 Hello(app);
 
-app.listen(process.env.PORT || 4000);
+// Server
+app.listen(process.env.PORT || 4000, () => {
+  console.log("Server running...");
+});
