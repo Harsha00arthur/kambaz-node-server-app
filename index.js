@@ -10,15 +10,18 @@ import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentsDao from "./Kambaz/Enrollments/dao.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import ModulesRoutes from "./Kambaz/Modules/routes.js";
+import mongoose from "mongoose";
 
 import "dotenv/config";
 import session from "express-session";
 
+
+const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz"
+mongoose.connect(CONNECTION_STRING);
 const app = express();
 
-// -----------------------------------------------------
-// ✅ FIXED CORS — REQUIRED FOR VERCEL + RENDER
-// -----------------------------------------------------
+
+
 app.use(
   cors({
     credentials: true,
@@ -29,9 +32,7 @@ app.use(
   })
 );
 
-// -----------------------------------------------------
-// ✅ FIXED SESSION — THE MOST IMPORTANT PART
-// -----------------------------------------------------
+
 const isProduction = process.env.NODE_ENV === "production";
 
 app.set("trust proxy", 1); // Required for secure cookies on Render

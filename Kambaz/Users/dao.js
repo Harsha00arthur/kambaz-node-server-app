@@ -1,48 +1,32 @@
+import model from "./model.js";
 import { v4 as uuidv4 } from "uuid";
-
-export default function UsersDao(db) {
-  const users = db.users;  // direct reference to DB
-
+export default function UsersDao() {
   const createUser = (user) => {
-    const newUser = { ...user, _id: uuidv4() };
-    users.push(newUser);
-    return newUser;
-  };
+  const newUser = { ...user, _id: uuidv4() };
+  return model.create(newUser);
+}
 
-  const findAllUsers = () => users;
 
-  const findUserById = (userId) =>
-    users.find((user) => user._id === userId);
+  const findAllUsers = () => model.find();
 
-  const findUserByUsername = (username) =>
-    users.find((user) => user.username === username);
+  const findUserById = (userId) => model.findById(userId);
 
-  const findUserByCredentials = (username, password) =>
-    users.find(
-      (user) => user.username === username && user.password === password
-    );
+  const findUserByUsername = (username) =>  model.findOne({ username: username });
+  const findUserByCredentials = (username, password) =>  model.findOne({ username, password });
 
-  // ⭐ FIXED: Proper update function
-  const updateUser = (userId, updates) => {
-    const index = users.findIndex((u) => u._id === userId);
-    if (index !== -1) {
-      users[index] = { ...users[index], ...updates };
-    }
-    return users[index];
-  };
+  const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $set: user });
 
-  const deleteUser = (userId) => {
-    const index = users.findIndex((u) => u._id === userId);
-    if (index !== -1) users.splice(index, 1);
-  };
+  const deleteUser = (userId) => model.findByIdAndDelete( userId );
+  const findUsersByRole = (role) => model.find({ role: role });
 
-  return {
-    createUser,
-    findAllUsers,
-    findUserById,
-    findUserByUsername,
-    findUserByCredentials,
-    updateUser,
-    deleteUser
-  };
+  const findUsersByPartialName = (partialName) => {
+  const regex = new RegExp(partialName, "i"); // 'i' makes it case-insensitive
+  return model.find({
+    $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+  });
+};
+
+
+  return { createUser, findAllUsers, findUserById, findUserByUsername, findUserByCredentials, updateUser, deleteUser, 
+    findUsersByRole, findUsersByPartialName };
 }
