@@ -1,37 +1,48 @@
-import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
 
-export default function EnrollmentsDao(db) {
-  function findAllEnrollments() {
-    return db.enrollments;
+export default function EnrollmentsDao() {
+
+  // Returns all courses the user is enrolled in
+  async function findCoursesForUser(userId) {
+    const enrollments = await model.find({ user: userId }).populate("course");
+    return enrollments.map((e) => e.course);
   }
 
-  function enrollUserInCourse(userId, courseId) {
-    const exists = db.enrollments.some(
-      (e) => e.user === userId && e.course === courseId
-    );
-
-    if (!exists) {
-      db.enrollments.push({
-        _id: uuidv4(),
-        user: userId,
-        course: courseId,
-      });
-    }
-
-    return db.enrollments;
+  // ⭐ REQUIRED: Returns all users enrolled in a course
+  async function findUsersForCourse(courseId) {
+    const enrollments = await model.find({ course: courseId }).populate("user");
+    return enrollments.map((e) => e.user);
   }
 
-  function unenrollUserFromCourse(userId, courseId) {
-    db.enrollments = db.enrollments.filter(
-      (e) => !(e.user === userId && e.course === courseId)
-    );
+  // Enroll a user
+  async function enrollUserInCourse(userId, courseId) {
+    return model.create({
+      user: userId,
+      course: courseId,
+      _id: `${userId}-${courseId}`,
+    });
+  }
 
-    return db.enrollments;
+  // Unenroll a user
+  async function unenrollUserFromCourse(user, course) {
+    return model.deleteOne({ user, course });
+  }
+
+  // Unenroll all users from a course
+  async function unenrollAllUsersFromCourse(courseId) {
+    return model.deleteMany({ course: courseId });
+  }
+
+  async function findAllEnrollments() {
+    return model.find().populate("user").populate("course");
   }
 
   return {
-    findAllEnrollments,
+    findCoursesForUser,
+    findUsersForCourse,
     enrollUserInCourse,
     unenrollUserFromCourse,
+    unenrollAllUsersFromCourse,
+    findAllEnrollments,
   };
 }
