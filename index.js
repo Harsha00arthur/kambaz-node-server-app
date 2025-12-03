@@ -3,39 +3,38 @@ import Hello from "./Hello.js";
 import Lab5 from "./Lab5/index.js";
 import cors from "cors";
 import db from "./Kambaz/Database/index.js";
+
 import UserRoutes from "./Kambaz/Users/routes.js";
 import CourseRoutes from "./Kambaz/Courses/routes.js";
-import AssignmentsDao from "./Kambaz/Assignments/dao.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
-import EnrollmentsDao from "./Kambaz/Enrollments/dao.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import ModulesRoutes from "./Kambaz/Modules/routes.js";
-import mongoose from "mongoose";
 
+import AssignmentsDao from "./Kambaz/Assignments/dao.js";
+
+import mongoose from "mongoose";
 import "dotenv/config";
 import session from "express-session";
 
+const CONNECTION_STRING =
+  process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
 
-const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz"
 mongoose.connect(CONNECTION_STRING);
+
 const app = express();
-
-
 
 app.use(
   cors({
     credentials: true,
     origin: [
       "http://localhost:3000",
-      "https://kambaz-next-js-mocha.vercel.app"
+      "https://kambaz-next-js-mocha.vercel.app",
     ],
   })
 );
 
-
 const isProduction = process.env.NODE_ENV === "production";
-
-app.set("trust proxy", 1); // Required for secure cookies on Render
+app.set("trust proxy", 1);
 
 app.use(
   session({
@@ -43,31 +42,28 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: isProduction,                    // true on Render
+      secure: isProduction,
       httpOnly: true,
-      sameSite: isProduction ? "none" : "lax", // "none" for cross-site cookies
+      sameSite: isProduction ? "none" : "lax",
     },
   })
 );
 
-// -----------------------------------------------------
 app.use(express.json());
 
-// Routes
+// ===== ASSIGNMENTS use Mongo-backed DAO =====
+const assignmentsDao = AssignmentsDao();
+AssignmentRoutes(app, assignmentsDao);
+
+// Other routes:
 UserRoutes(app, db);
 CourseRoutes(app, db);
 ModulesRoutes(app, db);
-
-const assignmentsDao = AssignmentsDao(db);
-AssignmentRoutes(app, assignmentsDao);
-
-const enrollmentsDao = EnrollmentsDao(db);
-EnrollmentRoutes(app, enrollmentsDao);
+EnrollmentRoutes(app, db);
 
 Lab5(app);
 Hello(app);
 
-// Server
 app.listen(process.env.PORT || 4000, () => {
   console.log("Server running...");
 });
