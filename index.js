@@ -11,6 +11,8 @@ import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import ModulesRoutes from "./Kambaz/Modules/routes.js";
 
 import AssignmentsDao from "./Kambaz/Assignments/dao.js";
+import QuizzesRoutes from "./Kambaz/Quizzes/routes.js";
+import QuestionRoutes from "./Kambaz/Questions/routes.js";
 
 import mongoose from "mongoose";
 import "dotenv/config";
@@ -60,6 +62,8 @@ UserRoutes(app, db);
 CourseRoutes(app, db);
 ModulesRoutes(app, db);
 EnrollmentRoutes(app, db);
+QuizzesRoutes(app);
+QuestionRoutes(app);
 
 Lab5(app);
 Hello(app);
