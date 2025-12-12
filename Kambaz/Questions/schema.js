@@ -2,29 +2,32 @@ import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema(
   {
-    quiz: { type: String, required: true },
+    quiz: { type: mongoose.Schema.Types.ObjectId, ref: "QuizModel", required: true },
 
     type: {
       type: String,
       enum: ["MCQ", "TRUE_FALSE", "FILL_BLANK"],
+      required: true,
       default: "MCQ",
     },
 
-    title: String,
+    title: { type: String, required: true, default: "New Question" },
     points: { type: Number, default: 1 },
-    question: String, // WYSIWYG HTML
+
+    // HTML string from Quill editor
+    question: { type: String, default: "" },
 
     // MCQ
-    choices: [String],
-    correctChoice: Number,
+    choices: [{ type: String }],
+    correctChoice: { type: Number, default: 0 },
 
-    // TRUE/FALSE
-    trueFalseAnswer: Boolean,
+    // TRUE_FALSE
+    trueFalseAnswer: { type: Boolean },
 
-    // FILL BLANK
-    blanks: [String],
+    // FILL_BLANK
+    blanks: [{ type: String }],
   },
-  { collection: "questions" }
+  { collection: "questions", timestamps: true }
 );
 
 export default questionSchema;
